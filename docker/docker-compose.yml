@@ -1,0 +1,21 @@
+version: '3.5'
+
+services:
+  govanityurls:
+    image: quay.io/foxiswho/govanityurls:latest
+    container_name: govanityurls
+    ports:
+      - 8080:8080
+    volumes:
+      - ./config:/app/config
+    # 因为 镜像程序是在 /app/govanityurls , 配置挂载在 /app/config/vanity.yaml
+    command: [ "/app/govanityurls", "/app/config/vanity.yaml" ]
+    networks:
+        go:
+          aliases:
+            - govanityurls
+
+networks:
+  go:
+    name: go
+    driver: bridge

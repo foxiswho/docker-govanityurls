@@ -1,0 +1,6 @@
+host: pkg.foxwho.com
+
+paths:
+  /blog:
+    repo: https://github.com/foxiswho/blog-go
+    vcs: git

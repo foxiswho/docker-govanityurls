@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: govanityurls
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: govanityurls
+  template:
+    metadata:
+      labels:
+        app: govanityurls
+    spec:
+      containers:
+      - name: govanityurls
+        image: quay.io/foxiswho/govanityurls:latest
+        # 因为 镜像程序是在 /app/govanityurls , 配置挂载在 /app/config/vanity.yaml
+        command: [ "/app/govanityurls", "/app/config/vanity.yaml" ]
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - name: vol-config
+          mountPath: "/app/config"
+      restartPolicy: "Always"
+      volumes:
+        - name: vol-config
+          hostPath:
+            # 宿主机目录
+            path: /home/k8s/govanityurls/config
+            # hostPath 卷指定 type，如果目录不存在则创建(可创建多层目录)
+            type: DirectoryOrCreate
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: govanityurls
+  labels:
+    app: govanityurls
+spec:
+  selector:
+    app: govanityurls
+  ports:
+  - port: 8080
+    targetPort: 8080
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: govanityurls
+  #这里使用的是 traefik,如果你不是，请 自行注释掉他
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  rules:
+  - host: pkg.foxwho.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: govanityurls
+            port:
+              number: 8080
+  #这里使用的是 tls,如果你不是，请 自行注释掉他
+  tls:
+    - hosts:
+        - pkg.foxwho.com
+      # Certificate 中 name 一样
+      secretName: foxwho-com-tls
